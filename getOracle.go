@@ -29,6 +29,11 @@ func GetChainlinkOraclesMapAll(currency string) map[string]map[string]string {
 				mappp[symbol] = oracle
 			}
 		}
+		for shouldbe, actually := range chainmapping {
+			if strings.EqualFold(network, actually) {
+				network = shouldbe
+			}
+		}
 		mapp[network] = mappp
 	}
 	return mapp
@@ -40,11 +45,7 @@ var chainmapping = map[string]string{
 }
 
 func GetChainlinkOraclesMap(network string, currency string) map[string]string {
-	res := GetChainlinkOraclesMapAll(currency)[network]
-	if res == nil {
-		res = GetChainlinkOraclesMapAll(currency)[chainmapping[network]]
-	}
-	return res
+	return GetChainlinkOraclesMapAll(currency)[network]
 }
 
 func GetChainlinkOracle(network string, symbol string, currency string) string {
