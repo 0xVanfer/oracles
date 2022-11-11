@@ -2,52 +2,47 @@ package oracles
 
 import (
 	"strings"
+	"time"
 
 	"github.com/0xVanfer/chainId"
 )
 
-func GetChainlinkOraclesMapAll(currency string) map[string]map[string]string {
-	mapp := make(map[string]map[string]string)
+// Mapping pair to oracle address.
+func getChainlinkCompleteMap() *ChainlinkOracleMap {
+	completeMap := make(map[string]map[string]string)
+	// Request the complete map.
 	allInfo, err := reqOracleAddresses()
 	if err != nil {
 		return nil
 	}
-	for network, info := range allInfo {
-		mappp := make(map[string]string)
-		_ = network
+	// For every chain, create a smaller chainMap.
+	for chain, info := range allInfo {
+		chainMap := make(map[string]string)
 		for _, networks := range info.Networks {
-			// must be Mainnet, default
+			// Only choose mainnet.
 			if !strings.Contains(networks.Name, "Mainnet") || networks.DataType != "default" {
 				continue
 			}
 			for _, proxy := range networks.Proxies {
-				if !strings.Contains(proxy.Pair, " / "+strings.ToUpper(currency)) {
-					continue
-				}
-				symbol := strings.ReplaceAll(proxy.Pair, " / "+strings.ToUpper(currency), "")
-				oracle := proxy.Proxy
-				mappp[symbol] = oracle
+				chainMap[proxy.Pair] = proxy.Proxy
 			}
 		}
-		for shouldbe, actually := range chainmapping {
-			if strings.EqualFold(network, actually) {
-				network = shouldbe
+		// Adapt to the chain names.
+		for shouldbe, actually := range chainMapping {
+			if strings.EqualFold(chain, actually) {
+				chain = shouldbe
 			}
 		}
-		mapp[network] = mappp
+		completeMap[chain] = chainMap
 	}
-	return mapp
+	return &ChainlinkOracleMap{
+		AddressMap: completeMap,
+		UpdateAt:   time.Now(),
+	}
 }
 
-var chainmapping = map[string]string{
+// Some chain naming is diffent from chainlist. Use a map to pair these chains.
+var chainMapping = map[string]string{
 	chainId.BinanceSmartChainName: "bnb-chain",
 	chainId.HecoChainName:         "heco-chain",
-}
-
-func GetChainlinkOraclesMap(network string, currency string) map[string]string {
-	return GetChainlinkOraclesMapAll(currency)[network]
-}
-
-func GetChainlinkOracle(network string, symbol string, currency string) string {
-	return GetChainlinkOraclesMap(network, currency)[strings.ToUpper(symbol)]
 }

@@ -1,24 +1,16 @@
 package oracles
 
 import (
-	"errors"
-
 	"github.com/0xVanfer/abigen/chainlink/chainlinkOracle"
-	"github.com/0xVanfer/chainId"
 	"github.com/0xVanfer/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/shopspring/decimal"
 )
 
-func GetPrice(network, symbol, currency string, client bind.ContractBackend) (decimal.Decimal, error) {
-	oracleAddr := GetChainlinkOracle(chainId.AvalancheChainName, "eth", "usd")
-	if oracleAddr == "" {
-		return decimal.Zero, errors.New("no such oracle")
-	}
-	return GetPriceByOracle(oracleAddr, client)
-}
-
-func GetPriceByOracle(oracleAddr string, client bind.ContractBackend) (decimal.Decimal, error) {
+// Get the price by chainlink oracle.
+//
+// Return value already divided by decimals.
+func GetPriceByChainlink(oracleAddr string, client bind.ContractBackend) (decimal.Decimal, error) {
 	oracle, _ := chainlinkOracle.NewChainlinkOracle(types.ToAddress(oracleAddr), client)
 	res, err := oracle.LatestAnswer(nil)
 	if err != nil {
